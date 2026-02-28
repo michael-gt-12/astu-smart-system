@@ -21,11 +21,6 @@ export default function ComplaintDetailPage() {
     const [status, setStatus] = useState('')
     const [remarks, setRemarks] = useState('')
 
-    const { data: summaryData, refetch: fetchSummary, isFetching: summaryLoading } = useQuery({
-        queryKey: ['complaintSummary', id],
-        queryFn: () => api.get(`/complaints/${id}/summary`).then(r => r.data.data.summary),
-        enabled: false,
-    })
 
     const updateMutation = useMutation({
         mutationFn: (updateData) => api.patch(`/complaints/${id}/status`, updateData).then(r => r.data),
@@ -115,20 +110,6 @@ export default function ComplaintDetailPage() {
                         )}
                     </div>
 
-                    {/* AI Summary for Admin */}
-                    {user?.role === 'admin' && (
-                        <div className="card p-6">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-semibold text-gray-900 dark:text-white">🤖 AI Summary</h3>
-                                <button onClick={() => fetchSummary()} disabled={summaryLoading} className="btn-secondary text-sm">
-                                    {summaryLoading ? 'Generating...' : 'Generate Summary'}
-                                </button>
-                            </div>
-                            {summaryData && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">{summaryData}</p>
-                            )}
-                        </div>
-                    )}
 
                     {/* Update form for staff/admin */}
                     {canUpdate && (

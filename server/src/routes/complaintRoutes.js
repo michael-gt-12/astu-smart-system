@@ -76,12 +76,11 @@ router.post(
     complaintController.confirmCompletion
 );
 
-// AI summary route
+// Shared routes
 router.get(
-    '/:id/summary',
+    '/:id',
     authenticate,
-    authorize('admin'),
-    complaintController.getComplaintSummary
+    complaintController.getComplaint
 );
 
 module.exports = router;

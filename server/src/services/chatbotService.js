@@ -183,27 +183,9 @@ const deletePdfFromIndex = async (docId) => {
     }
 };
 
-/**
- * Generate AI summary for complaint (for admin)
- */
-const generateSummary = async (text) => {
-    try {
-        if (!isGeminiConfigured()) {
-            return text.substring(0, 200) + '...';
-        }
-
-        const prompt = `Summarize the following complaint description in 2 sentences. Focus on the core issue and its urgency.\n\nDescription: ${text}`;
-        const summary = await generateText(prompt);
-        return summary.trim();
-    } catch (error) {
-        console.error('[ChatbotService] Summary error:', error);
-        return text.substring(0, 200) + '...';
-    }
-};
 
 module.exports = {
     chat,
     ingestPdf,
     deletePdfFromIndex,
-    generateSummary,
 };

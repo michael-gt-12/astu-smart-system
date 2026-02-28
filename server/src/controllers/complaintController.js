@@ -1,7 +1,6 @@
 const Complaint = require('../models/Complaint');
 const User = require('../models/User');
 const { sendComplaintSubmittedEmail, sendStatusUpdateEmail } = require('../services/emailService');
-const { generateSummary } = require('../services/chatbotService');
 
 // Create complaint (Student)
 exports.createComplaint = async (req, res, next) => {
@@ -318,25 +317,3 @@ exports.confirmCompletion = async (req, res, next) => {
     }
 };
 
-// Get complaint summary (Admin)
-exports.getComplaintSummary = async (req, res, next) => {
-    try {
-        const complaint = await Complaint.findById(req.params.id);
-
-        if (!complaint) {
-            return res.status(404).json({
-                success: false,
-                message: 'Complaint not found.',
-            });
-        }
-
-        const summary = generateSummary(complaint.description);
-
-        res.json({
-            success: true,
-            data: { summary },
-        });
-    } catch (error) {
-        next(error);
-    }
-};
