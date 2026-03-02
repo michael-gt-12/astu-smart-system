@@ -78,16 +78,18 @@ function StaffDashboard() {
     if (isLoading) return <LoadingSkeleton count={3} />
 
     const complaints = data?.complaints || []
+    const stats = data?.stats || {}
     const total = data?.pagination?.total || 0
 
     return (
         <>
             <PageHeader title="Staff Dashboard" subtitle="Manage assigned complaints" />
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <StatCard icon={HiOutlineDocumentText} label="Assigned to Me" value={total} color="primary" />
-                <StatCard icon={HiOutlineClock} label="In Progress" value={complaints.filter(c => c.status === 'In Progress').length} color="amber" />
-                <StatCard icon={HiOutlineCheckCircle} label="Resolved" value={complaints.filter(c => c.status === 'Resolved').length} color="emerald" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <StatCard icon={HiOutlineDocumentText} label="Total Assigned" value={total} color="primary" />
+                <StatCard icon={HiOutlineExclamationCircle} label="Open" value={stats.open || 0} color="blue" />
+                <StatCard icon={HiOutlineClock} label="In Progress" value={stats.inProgress || 0} color="amber" />
+                <StatCard icon={HiOutlineCheckCircle} label="Resolved" value={stats.resolved || 0} color="emerald" />
             </div>
 
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assigned Complaints</h2>

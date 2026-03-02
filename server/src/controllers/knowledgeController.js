@@ -1,7 +1,6 @@
 const KnowledgeDoc = require('../models/KnowledgeDoc');
 const { ingestPdf, deletePdfFromIndex } = require('../services/chatbotService');
-const path = require('path');
-const fs = require('fs');
+const { uploadBuffer } = require('../config/cloudinary');
 
 // Upload knowledge document (Admin)
 exports.uploadDocument = async (req, res, next) => {
@@ -13,10 +12,16 @@ exports.uploadDocument = async (req, res, next) => {
             });
         }
 
-        const filePath = req.file.path;
-        const originalName = req.file.originalname;
+        // 1. Upload to Cloudinary
+        const cloudinaryResult = await uploadBuffer(req.file.buffer, 'knowledge');
 
-        const doc = await ingestPdf(filePath, originalName, req.user._id);
+        // 2. Ingest into RAG (Pinecone) using the buffer
+        const doc = await ingestPdf(
+            req.file.buffer,
+            req.file.originalname,
+            req.user._id,
+            cloudinaryResult.secure_url
+        );
 
         res.status(201).json({
             success: true,

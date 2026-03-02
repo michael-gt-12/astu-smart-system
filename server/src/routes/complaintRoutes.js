@@ -43,7 +43,7 @@ router.get(
 router.get(
     '/all',
     authenticate,
-    authorize('admin'),
+    authorize('admin', 'category_staff'),
     complaintController.getAllComplaints
 );
 

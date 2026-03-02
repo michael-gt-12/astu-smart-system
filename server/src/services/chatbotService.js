@@ -84,12 +84,15 @@ const chat = async (message) => {
 
 /**
  * Ingest PDF into the RAG system
+ * @param {Buffer} buffer - File buffer
+ * @param {String} originalName - Original filename
+ * @param {String} userId - ID of the user uploading
+ * @param {String} cloudinaryUrl - URL of the uploaded file on Cloudinary
  */
-const ingestPdf = async (filePath, originalName, userId) => {
+const ingestPdf = async (buffer, originalName, userId, cloudinaryUrl) => {
     try {
-        // 1. Parse PDF
-        const dataBuffer = fs.readFileSync(filePath);
-        const data = await pdf(dataBuffer);
+        // 1. Parse PDF from buffer
+        const data = await pdf(buffer);
         const text = data.text;
         console.log(`[ChatbotService] Extracted ${text.length} characters from ${originalName}`);
 
@@ -138,12 +141,13 @@ const ingestPdf = async (filePath, originalName, userId) => {
 
         // 5. Save metadata to MongoDB
         const doc = await KnowledgeDoc.create({
-            filename: filePath.split('/').pop().split('\\').pop(),
+            filename: originalName,
             originalName,
             uploadedBy: userId,
             chunkCount: pineconeVectors.length,
             pineconeIds,
-            fileSize: dataBuffer.length,
+            fileSize: buffer.length,
+            fileUrl: cloudinaryUrl, // Store the Cloudinary URL
         });
 
         return doc;
@@ -164,16 +168,11 @@ const deletePdfFromIndex = async (docId) => {
         // 1. Delete from Pinecone
         const index = await getIndex();
         if (doc.pineconeIds && doc.pineconeIds.length > 0) {
-            await index.deleteMany(doc.pineconeIds);
+            console.log(`[ChatbotService] Deleting ${doc.pineconeIds.length} vectors from Pinecone...`);
+            await index.deleteMany({ ids: doc.pineconeIds });
         }
 
-        // 2. Delete file if it exists
-        const filePath = `./uploads/knowledge/${doc.filename}`;
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-
-        // 3. Delete from MongoDB
+        // 2. Delete from MongoDB
         await KnowledgeDoc.findByIdAndDelete(docId);
 
         return true;

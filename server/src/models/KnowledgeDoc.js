@@ -26,6 +26,10 @@ const knowledgeDocSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        fileUrl: {
+            type: String,
+            required: true,
+        },
     },
     {
         timestamps: true,

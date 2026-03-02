@@ -1,6 +1,7 @@
 const Complaint = require('../models/Complaint');
 const User = require('../models/User');
 const { sendComplaintSubmittedEmail, sendStatusUpdateEmail } = require('../services/emailService');
+const { uploadBuffer } = require('../config/cloudinary');
 
 // Create complaint (Student)
 exports.createComplaint = async (req, res, next) => {
@@ -15,7 +16,8 @@ exports.createComplaint = async (req, res, next) => {
         };
 
         if (req.file) {
-            complaintData.fileUrl = `/uploads/${req.file.filename}`;
+            const result = await uploadBuffer(req.file.buffer, 'complaints');
+            complaintData.fileUrl = result.secure_url;
         }
 
         const complaint = await Complaint.create(complaintData);
@@ -110,7 +112,13 @@ exports.getAllComplaints = async (req, res, next) => {
         const { status, category, page = 1, limit = 20 } = req.query;
         const query = {};
         if (status) query.status = status;
-        if (category) query.category = category;
+
+        // Staff filter - only see their own category
+        if (req.user.role === 'category_staff') {
+            query.category = req.user.assignedCategory;
+        } else if (category) {
+            query.category = category;
+        }
 
         const complaints = await Complaint.find(query)
             .populate('category', 'name')
@@ -155,6 +163,18 @@ exports.getAssignedComplaints = async (req, res, next) => {
 
         const total = await Complaint.countDocuments(query);
 
+        // Status counts for dashboard
+        const staffStatusCounts = await Complaint.aggregate([
+            { $match: { category: req.user.assignedCategory } },
+            { $group: { _id: '$status', count: { $sum: 1 } } },
+        ]);
+
+        const statusMap = {};
+        staffStatusCounts.forEach((s) => {
+            statusMap[s._id] = s.count;
+        });
+
+
         res.json({
             success: true,
             data: {
@@ -164,6 +184,11 @@ exports.getAssignedComplaints = async (req, res, next) => {
                     page: parseInt(page),
                     pages: Math.ceil(total / limit),
                 },
+                stats: {
+                    open: statusMap['Open'] || 0,
+                    inProgress: statusMap['In Progress'] || 0,
+                    resolved: statusMap['Resolved'] || 0,
+                }
             },
         });
     } catch (error) {

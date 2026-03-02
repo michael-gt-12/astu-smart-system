@@ -6,19 +6,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure storage for knowledge docs
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = './uploads/knowledge';
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, `knowledge-${Date.now()}${path.extname(file.originalname)}`);
-    },
-});
+// Configure storage for knowledge docs (Memory storage for Cloudinary)
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage,
